@@ -1,0 +1,75 @@
+section .data
+    ; Vetor de exemplo
+    vetor_exemplo db 9, 4, 6, 2, 1, 5
+    tamanho_vetor equ $ - vetor_exemplo
+    formato db "%d ", 0
+
+section .text
+    extern printf
+    global main
+
+main:
+    mov ebp, esp	 			;alterar registradores de 64 para 32 bits
+    ; Chamada da sub-rotina bubble_sort
+    push tamanho_vetor
+    push vetor_exemplo
+    call bubble_sort
+
+    ; Imprimir vetor resultante
+    mov edi, vetor_exemplo
+    mov ecx, tamanho_vetor
+    print_loop:
+    push ecx
+    push edi
+    push formato
+    call printf
+    add esp, 12
+    add edi, 1
+    loop print_loop
+
+    ; Resto do seu programa aqui
+
+    ; Finalizar o programa
+    mov eax, 1
+    xor ebx, ebx
+    mov eax, 60 ; número da chamada de sistema para a função "exit"
+    xor edi, edi ; código de retorno (0 no caso de sucesso)
+    syscall ; realizar a chamada de sistema
+
+bubble_sort:
+    push ebp           	 ; Salvar o ponteiro de base antigo
+    mov ebp, esp         ; Configurar o novo ponteiro de base
+
+    mov ecx, [ebp + 8] 	 ; Obter o tamanho do vetor (parâmetro n)
+    dec ecx            	 ; Reduzir o tamanho para o número de iterações
+
+outer_loop:
+    mov edx, 0         	 ; Define o contador interno para zero
+
+inner_loop:
+    mov eax, edx  
+    inc eax
+    mov ebx, ebp		        ; Obter o ponteiro para o vetor (parâmetro do vetor)
+    mov esi, [ebx + 4 * edx] 	        ; Obter o elemento atual
+    mov edi, [ebx + 4 * eax] 	        ; Obter o próximo elemento
+
+    cmp esi, edi        		; Comparar os dois elementos
+    jle no_swap         		; Pular se o elemento atual for menor ou igual ao próximo
+
+    ; Trocar os elementos
+    xchg esi, edi
+    mov [ebx + 4 * edx], esi
+    mov [ebx + 4 * eax], edi
+
+no_swap:
+    inc edx             		; Incrementar o contador interno
+    cmp edx, ecx        		; Comparar o contador interno com o tamanho ajustado
+    jl inner_loop       		; Pular se ainda houver elementos para comparar
+
+    dec ecx             		; Decrementar o tamanho ajustado
+    cmp ecx, 0          		; Comparar o tamanho ajustado com zero
+    jne outer_loop      		; Pular se ainda houver iterações para fazer
+
+    mov esp, ebp        		; Restaurar o ponteiro de pilha original
+    pop ebp             		; Restaurar o ponteiro de base antigo
+    ret
